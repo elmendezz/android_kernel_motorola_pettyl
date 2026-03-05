@@ -1,0 +1,54 @@
+name: Build Motorola Pettyl Kernel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+          bc bison build-essential curl flex git kmod \
+          libssl-dev libelf-dev gcc-aarch64-linux-gnu \
+          gcc-arm-linux-gnueabi python3
+
+      - name: Clone clang
+        run: |
+          git clone https://github.com/kdrag0n/proton-clang.git clang
+
+      - name: Setup environment
+        run: |
+          export ARCH=arm
+          export SUBARCH=arm
+          export PATH=$PWD/clang/bin:$PATH
+
+      - name: Configure kernel
+        run: |
+          make O=out ARCH=arm pettyl_defconfig
+
+      - name: Build kernel
+        run: |
+          make -j$(nproc --all) \
+          O=out \
+          ARCH=arm \
+          CC=clang \
+          CROSS_COMPILE=arm-linux-gnueabi- \
+          CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+
+      - name: Upload kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: pettyl-kernel
+          path: |
+            out/arch/arm/boot/Image*
+            out/arch/arm/boot/dts/*.dtb
