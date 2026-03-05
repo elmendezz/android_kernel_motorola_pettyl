@@ -1,0 +1,30 @@
+name: Delete Kernel Folder
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  delete-folder:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configurar git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+      - name: Borrar carpeta
+        run: |
+          rm -rf kernel-msm
+
+      - name: Commit cambios
+        run: |
+          git add -A
+          git commit -m "Remove kernel-msm folder" || echo "No changes"
+          git push
