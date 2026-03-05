@@ -6,6 +6,9 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   clone-kernel:
     runs-on: ubuntu-latest
@@ -17,14 +20,16 @@ jobs:
       - name: Clonar kernel pettyl
         run: |
           git clone https://github.com/MotorolaMobilityLLC/kernel-msm.git -b oreo-8.1.0-release-pettyl kernel-msm
+          rm -rf kernel-msm/.git
 
       - name: Configurar git
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
-      - name: Commit kernel al repo
+      - name: Commit kernel
         run: |
           git add kernel-msm
-          git commit -m "Add Motorola pettyl kernel"
+          git commit -m "Add Motorola pettyl kernel" || echo "No changes"
           git push
+        
