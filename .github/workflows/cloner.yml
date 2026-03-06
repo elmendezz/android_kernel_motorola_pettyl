@@ -1,35 +1,44 @@
-name: Clone Motorola Kernel
+name: Clone Motorola Kernel To My Repo
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  workflow_dispatch: # Se activa manualmente para no entrar en bucle
 
 permissions:
   contents: write
 
 jobs:
-  clone-kernel:
+  clone-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout este repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Clonar kernel pettyl
+      - name: Configurar Git
         run: |
-          git clone https://github.com/MotorolaMobilityLLC/kernel-msm.git -b oreo-8.1.0-release-pettyl kernel-msm
-          rm -rf kernel-msm/.git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Configurar git
+      - name: Clonar y Limpiar
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
+          # 1. Clonamos el de Motorola en una carpeta temporal
+          git clone --depth=1 --recursive -b oreo-8.1.0-release-pettyl https://github.com/MotorolaMobilityLLC/kernel-msm.git temp_kernel
+          
+          # 2. Borramos el rastro de Git de Motorola para que no se confunda con el tuyo
+          rm -rf temp_kernel/.git
+          find temp_kernel -name ".git*" -exec rm -rf {} +
 
-      - name: Commit kernel
+          # 3. Movemos todo a la raíz de TU repositorio
+          cp -r temp_kernel/* .
+          rm -rf temp_kernel
+
+      - name: Commit y Push forzado
         run: |
-          git add kernel-msm
-          git commit -m "Add Motorola pettyl kernel" || echo "No changes"
-          git push
-        
+          git add .
+          # Si no hay cambios, no fallar
+          git commit -m "Update: Motorola Pettyl Source Code (Full)" || echo "No hay cambios para subir"
+          
+          # Intentar subir con reintento por si el repo es muy pesado
+          git push origin main
